@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>nginx</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>nginx, varnish & haproxy @ Netconomy</h1>
+					<h3></h3>
+					<p>
+						<small>Created by Robert Bartl / <a href="http://twitter.com/robert_bartl">@robert_bartl</a></small>
+					</p>
+				</section>
+
+				<section>
+					<h2>NGINX</h2>
+					<p>
+						nginx is a very fast http server which is mostly used for reverse Proxy purposes. and stands at the forefront of our web systems.
+					</p>
+
+					<aside class="notes">
+
+					</aside>
+				</section>
+
+				<!-- Example of nested vertical slides -->
+				<section>
+					<section>
+						<h2>NGINX Basics</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>Features</h2>
+						<ul>
+							<li>Flexible Configuration</li>
+							<li>Fast (epoll support)</li>
+							<li>SSL</li>
+							<li>low memory footprint (keep alive)</li>
+							<li>few security problems</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Flexible Configuration</h2>
+						<ul>
+							<li>Variables</li>
+							<li>IF Blocks (do not nest!)</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<h2>Netconomy specifics</h2>
+					<ul>
+						<li>URL Whitelisting</li>
+						<li>splitting in small include files</li>
+						<li>Single Repo (merges in all directions posible)</li>
+						<li>URL Groupings</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>NGINX: Future</h2>
+					<ul>
+						<li>Accelerator specific whitelisting as base start</li>
+						<li>control of include files via sites files</li>
+						<li>fewer includes in sites files (master include)</li>
+						<li>automatic managment(puppet) of sites-enabled</li>
+						<li>remove upstream logging</li>
+						<li>smaller location blocks</li>
+						<li>automatic generation from hybris project</li>
+						<li>automatic error page fetching consolidation</li>
+						<li>remove naming of clients to clone easier clone configs</li>
+						<li>base config creation</li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+						<h2>NGINX sites</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>sites available</h2>
+						<ul>
+							<li>default</li>
+							<li>nccharlesv-o-proxy001....</li>
+							<li>www.charles-voegele.at</li>
+							<li>vagrant</li>
+						</ul>
+					</section>
+					<section>
+						<h2>sites enabled (live)</h2>
+						<ul>
+							<li>www.charles-voegele.at</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>NGINX include.d</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>common-admin-locations.conf</h2>
+						<ul>
+							<li>hmc / cockpits</li>
+							<li>blocked management urls</li>
+						</ul>
+					</section>
+					<section>
+						<h2>example block</h2>
+						<pre>
+	location ~* ^/(admin|hmc|cmscockpit|mcc|productcockpit|cscockpit|importcockpit|cache|hac).*$ {
+		set $nc_url_gid "6";
+		# only allow ssl connection
+		if ( $scheme = "http" ) {
+			rewrite  ^/(.*)$  https://$host/$1 permanent;
+		}
+		proxy_pass http://hybris_backend_9001;
+	        proxy_set_header Host $http_host;
+	        proxy_set_header X-Real-IP $remote_addr;
+	        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	        proxy_set_header Accept-Encoding "";
+		proxy_set_header Authorization "";
+		if ($show_debug_header) {
+			add_header X-NC-URLGid "6";
+		}
+		# timeout fuer lang laufende jobs erhoeht auf 60 minuten
+		proxy_read_timeout 3600;
+
+		include include.d/common-response_header-non-production.conf;
+		include include.d/common-response_header-production.conf;
+		include include.d/common.charlesv-auth-basic.conf;
+	}
+	</pre>
+					</section>
+					<section>
+						<h2>common-locations.conf</h2>
+						<ul>
+							<li>all user facing urls</li>
+						</ul>
+					</section>
+					<section>
+						<h2>example block</h2>
+						<pre>
+##	URL Group 300
+#	devops extension
+	location ~ "^/devops/.*$" {
+		set $nc_url_gid "300";
+		include include.d/common-response_header-non-production.conf;
+		include include.d/common-response_header-production.conf;
+		include include.d/common-upstream-rproxy_charlesv_balancer.conf;
+	}
+		</pre>
+					</section>
+					<section>
+						<h2>maintenance.conf</h2>
+						<ul>
+							<li>enable maintenance mode </li>
+							<li>configure allowed ips </li>
+						</ul>
+					</section>
+					<section>
+						<h2>Various</h2>
+						<ul>
+							<li>common-basics.conf</li>
+							<li>common.charlesv-auth-basic.conf</li>
+							<li>common-enforce-http.conf</li>
+							<li>common-enforce-https.conf</li>
+							<li>common-gzip.conf</li>
+							<li>common-limit_request_method.conf</li>
+							<li>common-mobiledevice.conf</li>
+							<li>common-no_revalidation.conf</li>
+							<li>common-gzip.conf</li>
+							<li>common-response_header-non-production.conf</li>
+							<li>common-response_header-production.conf</li>
+							<li>common-scheme.conf</li>
+							<li>common-upstream-headers.conf</li>
+							<li>common-upstream-rproxy_balanced_varnish_6081.conf</li>
+							<li>common-upstream-rproxy_charlesv_balancer.conf</li>
+							<li>common-scheme.conf</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>NGINX Error Pages</h2>
+						<ul>
+							<li>intercepts for configured error codes</li>
+							<li>can show local or hybris error pages</li>
+						</ul>
+					</section>
+					<section>
+						<h2>fetcher</h2>
+						<ul>
+							<li>nginx/scripts/create_error_pages.sh</li>
+							<li>fetches configured urls from first backend node</li>
+							<li>404, 503, 500</li>
+							<li>checks for minimal size</li>
+							<li>destination: /var/www/{hostname}/_error</li>
+							<li>503 maintenance version is also saved (clone)</li>
+						</ul>
+					</section>
+					<section>
+						<h2>404 page not found</h2>
+						<ul>
+							<li>variant 1: redirected(internal) to hybris</li>
+							<li>variant 2: show local cached 404 version</li>
+							<li>configured in common-locations.conf</li>
+							<li>destination defined in @404</li>
+							<li>hybris delivered 404 page(variante 1) must not set status code to 404</li>
+						</ul>
+					</section>
+					<section>
+						<h2>503 Gateway Timeout/Dead</h2>
+						<ul>
+							<li>MUST not use hybris resources (images, css, etc)</li>
+							<li>use CDN or base64 coded resources</li>
+							<li>must always be prepared with error page fetcher</li>
+							<li>additional variant is possible for maintenance page</li>
+						</ul>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>NGINX logging &amp; Monitoring</h2>
+					</section>
+					<section>
+						<h2>/var/log/nginx/*</h2>
+						<ul>
+							<li>access log for each host</li>
+							<li>error log for each host</li>
+						</ul>
+					</section>
+					<section>
+						<h2>logstash</h2>
+						<ul>
+							<li>parses the log files</li>
+							<li>keeps in memory metrics and statistics</li>
+							<li>output to graphite or similar stuff</li>
+						</ul>
+					</section>
+					<section>
+						<h2>graphite chart 90'th percentile</h2>
+						<img src="graphite1.png" width="80%" border="0" />
+					</section>
+				</section>
+				<section>
+					<h2>VARNISH</h2>
+					<p>
+						varnish is a c based, in memory HTTP Cache
+					</p>
+
+					<aside class="notes">
+
+					</aside>
+				</section>
+				<section>
+					<section>
+						<h2>VARNISH Basics</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>Features</h2>
+						<ul>
+							<li>Extremely Flexible Configuration</li>
+							<li>Fast (in memory)</li>
+							<li>awesome debugging/metrics</li>
+						</ul>
+						<h2>Downsides</h2>
+						<ul>
+							<li>NO Cluster support</li>
+							<li>NO SSL support</li>
+							<li>logging</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Flexible Configuration</h2>
+						<ul>
+							<li>C Based</li>
+							<li>Programmable</li>
+							<li>many stages to adapt (subroutines)</li>
+							<li>Real C Modules possible (not recommended)</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Subroutines</h2>
+						<ul>
+							<li>vcl_init</li>
+							<li>vcl_recv</li>
+							<li>vcl_pipe</li>
+							<li>vcl_pass</li>
+							<li>vcl_hash</li>
+							<li>vcl_hit</li>
+							<li>vcl_miss</li>
+							<li>vcl_fetch</li>
+							<li>vcl_deliver</li>
+							<li>vcl_error</li>
+							<li>vcl_fini</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_recv</h2>
+						<ul>
+							<li>when a request is received completely</li>
+							<li>decide if and how to cache it</li>
+							<li>handle incoming cookies (remove, split, etc)</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_pipe</h2>
+						<ul>
+							<li>called when recv decided to not cache and pipe the request</li>
+							<li>nothing is cached</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_pass</h2>
+						<ul>
+							<li>called when recv decided to not cache and pass the request</li>
+							<li>nothing is cached</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_hash</h2>
+						<ul>
+							<li>what to include in the hash code to make a request unique</li>
+							<li>host</li>
+							<li>url</li>
+							<li>query string</li>
+							<li>possibly cookies</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_hit</h2>
+						<ul>
+							<li>called when a object was found in cache</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_miss</h2>
+						<ul>
+							<li>called when a object was not found in cache but will be cached</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_fetch</h2>
+						<ul>
+							<li>called when a object was retrieved from a backend</li>
+							<li>can decided not to cache (e.g. set-cookies)</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_deliver</h2>
+						<ul>
+							<li>called before a object will be returned to the caller</li>
+							<li>can restart the request (e.g. error)</li>
+						</ul>
+					</section>
+					<section>
+						<h2>vcl_error</h2>
+						<ul>
+							<li>called when an error occurs</li>
+							<li>can restart the request (e.g. error)</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Possible returns</h2>
+						<ul>
+							<li>deliver</li>
+							<li>error</li>
+							<li>fetch</li>
+							<li>hash</li>
+							<li>hit_for_pass: remember not to cache</li>
+							<li>lookup: activate cache</li>
+							<li>ok</li>
+							<li>pass: do not cache this call</li>
+							<li>pipe: do not cache anything in this CONNECTION</li>
+							<li>restart</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>VARNISH: Logging</h2>
+						<ul>
+							<li>varnishlog</li>
+							<li>filters</li>
+							<li>very verbose!!</li>
+							<li>possible in live systems because of filtering</li>
+						</ul>
+					</section>
+					<section>
+						<h2>VARNISH: Logging Example</h2>
+						<pre>
+varnishlog -c -m 'RxHeader:X-Forwarded-For:.*212.183.101.135.*'
+						</pre>
+					</section>
+					<section>
+						<h2>VARNISH: Logging Example shot</h2>
+						<img src="varnishlog.png"/>
+					</section>
+				</section>
+
+
+
+				<section>
+					<h2>VARNISH: Netconomy specifics</h2>
+					<ul>
+						<li>TTL taken from NGINX config</li>
+						<li>splitting in small include files for subroutines</li>
+						<li>variable backends (lutz)</li>
+						<li>Check hostname</li>
+						<li>PURGE and BAN Features</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>VARNISH: Future Features</h2>
+					<ul>
+						<li>Smaller config</li>
+						<li>remove useless handling of url groups</li>
+						<li>consolidate accross projects</li>
+						<li>automatic managment(puppet) of hostname check file</li>
+						<li>monitoring</li>
+					</ul>
+				</section>
+
+
+				<section>
+					<h2>HAPROXY</h2>
+					<p>
+						haproxy is a small load balancer with many features and an web and REST interface.
+					</p>
+
+				</section>
+				<section>
+					<section>
+						<h2>HAPROXY Basics</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>Features</h2>
+						<ul>
+							<li>small configuration</li>
+							<li>low cpu usage</li>
+							<li>NO SSL</li>
+							<li>NO AJP</li>
+							<li>few security problems</li>
+							<li>web/REST interface</li>
+							<li>alive checks</li>
+							<li>redispatch (broken backends)</li>
+							<li>cookie based session fixation</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Configuration (haproxy.cfg)</h2>
+						<pre>
+defaults
+	log	global
+	mode	http
+	option	dontlognull
+        contimeout 5000
+        clitimeout 50000
+        srvtimeout 40000
+	errorfile 400 /etc/haproxy/errors/400.http
+	errorfile 403 /etc/haproxy/errors/403.http
+	errorfile 408 /etc/haproxy/errors/408.http
+	errorfile 500 /etc/haproxy/errors/500.http
+	errorfile 502 /etc/haproxy/errors/502.http
+	errorfile 503 /etc/haproxy/errors/503.http
+	errorfile 504 /etc/haproxy/errors/504.http
+							</pre>
+					</section>
+					<section>
+						<h2>Configuration specific (o.cfg)</h2>
+						<pre>
+listen app :801
+        option dontlog-normal
+        option log-health-checks
+        option httplog
+        option redispatch
+        balance roundrobin
+        cookie sid insert indirect
+        server  chapp1 nccharlesv-o-cvapp001.ops.local.netconomy.net:9001 check cookie s0 inter 30000 fall 2 weight 2
+        server  chapp2 nccharlesv-o-cvapp002.ops.local.netconomy.net:9001 check cookie s1 inter 30000 fall 2 weight 2
+        stats enable
+        stats auth haadmin:secrettreeyellow
+        stats admin if TRUE
+        option httpclose
+        							</pre>
+					</section>
+				</section>
+
+				<section>
+					<h2>HAPROXY: Netconomy specifics</h2>
+					<ul>
+						<li>configs splitted for stage/Q/P (/active directory)</li>
+						<li>startup script adapted for point 1</li>
+						<li>session fixation via cookie</li>
+						<li>no keep alive</li>
+					</ul>
+				</section>
+				<section>
+					<h2>HAPROXY: Future</h2>
+					<ul>
+						<li>lobby haproxy devs to support includes</li>
+					</ul>
+				</section>
+				<section>
+					<h2>HAPROXY: Web Interface</h2>
+					<img src="haproxy.png"/>
+				</section>
+
+				<section>
+					<h1>TODOS</h1>
+					<ul>
+						<li>better presentation (work "another" hour on it)</li>
+					</ul>
+				</section>
+				<section>
+					<h1>THE END</h1>
+					<h3>BY Robert Bartl</h3>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
