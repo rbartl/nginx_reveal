@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>nginx / varnish @ netconomy</title>
+
+		<meta name="description" content="nginx / varnish @ netconomy">
+		<meta name="author" content="Robert Bartl">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/nc.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>nginx, varnish & haproxy @ Netconomy</h1>
+					<h3></h3>
+					<p>
+						<small>Created by Robert Bartl / <a href="http://twitter.com/robert_bartl">@robert_bartl</a></small>
+					</p>
+				</section>
+
+				<section>
+					<h2>NGINX</h2>
+					<p>
+						nginx is a very fast http server which is mostly used for reverse Proxy purposes. and stands at the forefront of our web systems.
+					</p>
+
+					<aside class="notes">
+
+					</aside>
+				</section>
+
+				<!-- Example of nested vertical slides -->
+				<section>
+					<section>
+						<h2>NGINX Basics</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>Features</h2>
+						<ul>
+							<li>Flexible Configuration</li>
+							<li>Fast (epoll support)</li>
+							<li>SSL</li>
+							<li>low memory footprint (keep alive)</li>
+							<li>few security problems</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Flexible Configuration</h2>
+						<ul>
+							<li>Variables</li>
+							<li>IF Blocks (do not nest!)</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<h2>Netconomy specifics</h2>
+					<ul>
+						<li>URL Whitelisting</li>
+						<li>splitting in small include files</li>
+						<li>Single Repo (merges in all directions posible)</li>
+						<li>URL Groupings</li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+						<h2>NGINX logging &amp; Monitoring</h2>
+					</section>
+					<section>
+						<h2>/var/log/nginx/*</h2>
+						<ul>
+							<li>access log for each host</li>
+							<li>error log for each host</li>
+						</ul>
+					</section>
+					<section>
+						<h2>logstash</h2>
+						<ul>
+							<li>parses the log files</li>
+							<li>keeps in memory metrics and statistics</li>
+							<li>output to <s>graphite</s> or similar stuff - INFLUXDB !!!</li>
+						</ul>
+					</section>
+					<section>
+						<h2><s>graphite</s> chart 90'th percentile</h2>
+						<img src="graphite1.png" width="80%" border="0" />
+					</section>
+				</section>
+				<section>
+					<h2>VARNISH</h2>
+					<p>
+						varnish is a c based, in memory HTTP Cache
+					</p>
+
+					<aside class="notes">
+
+					</aside>
+				</section>
+				<section>
+					<section>
+						<h2>VARNISH Basics</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>Features</h2>
+						<ul>
+							<li>Extremely Flexible Configuration</li>
+							<li>Fast (in memory)</li>
+							<li>awesome debugging/metrics</li>
+						</ul>
+						<h2>Downsides</h2>
+						<ul>
+							<li>NO Cluster support</li>
+							<li>NO SSL support</li>
+							<li>logging</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Flexible Configuration</h2>
+						<ul>
+							<li>C Based</li>
+							<li>Programmable</li>
+							<li>many stages to adapt (subroutines)</li>
+							<li>Real C Modules possible (not recommended)</li>
+						</ul>
+					</section>
+				</section>
+
+
+
+
+				<section>
+					<h2>VARNISH: Netconomy specifics</h2>
+					<ul>
+						<li>TTL taken from NGINX config</li>
+						<li>splitting in small include files for subroutines</li>
+						<li>variable backends (lutz)</li>
+						<li>Check hostname</li>
+						<li>PURGE and BAN Features</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>VARNISH: Future Features</h2>
+					<ul>
+						<li>Smaller config</li>
+						<li>remove useless handling of url groups</li>
+						<li>consolidate accross projects</li>
+						<li>automatic managment(puppet) of hostname check file</li>
+						<li>monitoring</li>
+					</ul>
+				</section>
+
+
+				<section>
+					<h2>HAPROXY</h2>
+					<p>
+						haproxy is a small load balancer with many features and an web and REST interface.
+					</p>
+
+				</section>
+				<section>
+					<section>
+						<h2>HAPROXY Basics</h2>
+						<p>
+						</p>
+					</section>
+					<section>
+						<h2>Features</h2>
+						<ul>
+							<li>small configuration</li>
+							<li>low cpu usage</li>
+							<li>NO SSL (only recently)</li>
+							<li>NO AJP</li>
+							<li>few security problems</li>
+							<li>web/REST interface</li>
+							<li>alive checks</li>
+							<li>redispatch (broken backends)</li>
+							<li>cookie based session fixation</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<h2>HAPROXY: Netconomy specifics</h2>
+					<ul>
+						<li>configs splitted for stage/Q/P (/active directory)</li>
+						<li>startup script adapted for point 1</li>
+						<li>session fixation via cookie</li>
+						<li>no keep alive</li>
+					</ul>
+				</section>
+				<section>
+					<h2>HAPROXY: Web Interface</h2>
+					<img src="haproxy.png"/>
+				</section>
+
+                <section>
+                    Overview
+                    <img src="overview_single.png" />
+                </section>
+                <section>
+                    Overview Multi Proxy
+                    <img src="overview_multi.png" />
+                </section>
+								<section>
+									<h1>Max Proxy Throughput</h1>
+	                    <ul>
+	                        <li>800Mbit/s</li>
+													<li>cached &amp; direct hits</li>
+	                    </ul>
+								</section>
+								<section>
+									<h1>Monitoring</h1>
+	                    <ul>
+	                        <li>grafana</li>
+													<li>influxdb</li>
+													<li>statsd</li>
+													<li>logstash</li>
+	                    </ul>
+								</section>
+								<section>
+									<h1>Puppet &amp; foreman</h1>
+	                    <ul>
+	                        <li>fast installation of test machines</li>
+	                    </ul>
+								</section>
+								<section>
+									<h1>openstack / ceph</h1>
+	                    <ul>
+	                        <li>integration with foreman</li>
+													<li>possiblity for short lived developer machines</li>
+													<li>dynamic storage</li>
+	                    </ul>
+								</section>
+								<section>
+									<h1>END</h1>
+									<h3>BY Robert Bartl</h3>
+				                    <h1>References</h1>
+				                    <ul>
+				                        <li>Hashing Picture stolen from http://www.tomkleinpeter.com/2008/03/17/programmers-toolbox-part-3-consistent-hashing/</li>
+				                    </ul>
+								</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
