@@ -15,7 +15,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 		<link rel="stylesheet" href="css/reveal.min.css">
-		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+		<link rel="stylesheet" href="css/theme/white.css" id="theme">
 
 		<!-- For syntax highlighting -->
 		<link rel="stylesheet" href="lib/css/zenburn.css">
@@ -114,11 +114,16 @@
 				</section>
 
 				<section>
-					<section>
-						<h2>NGINX sites</h2>
-						<p>
-						</p>
-					</section>
+                    <section>
+                        <h2>NGINX config</h2>
+                        <p>
+                        </p>
+                    </section>
+                    <section>
+                        <h2>NGINX sites</h2>
+                        <p>
+                        </p>
+                    </section>
 					<section>
 						<h2>sites available</h2>
 						<ul>
@@ -134,9 +139,6 @@
 							<li>www.charles-voegele.at</li>
 						</ul>
 					</section>
-				</section>
-
-				<section>
 					<section>
 						<h2>NGINX include.d</h2>
 						<p>
@@ -223,9 +225,6 @@
 							<li>common-scheme.conf</li>
 						</ul>
 					</section>
-				</section>
-
-				<section>
 					<section>
 						<h2>NGINX Error Pages</h2>
 						<ul>
@@ -280,11 +279,11 @@
 						<ul>
 							<li>parses the log files</li>
 							<li>keeps in memory metrics and statistics</li>
-							<li>output to graphite or similar stuff</li>
+							<li>output to <s>graphite</s> or similar stuff - INFLUXDB !!!</li>
 						</ul>
 					</section>
 					<section>
-						<h2>graphite chart 90'th percentile</h2>
+						<h2><s>graphite</s> chart 90'th percentile</h2>
 						<img src="graphite1.png" width="80%" border="0" />
 					</section>
 				</section>
@@ -330,6 +329,9 @@
 				</section>
 
 				<section>
+                    <section>
+                        <h2>Varnish Config</h2>
+                    </section>
 					<section>
 						<h2>Subroutines</h2>
 						<ul>
@@ -411,9 +413,7 @@
 							<li>can restart the request (e.g. error)</li>
 						</ul>
 					</section>
-				</section>
 
-				<section>
 					<section>
 						<h2>Possible returns</h2>
 						<ul>
@@ -496,7 +496,7 @@ varnishlog -c -m 'RxHeader:X-Forwarded-For:.*212.183.101.135.*'
 						<ul>
 							<li>small configuration</li>
 							<li>low cpu usage</li>
-							<li>NO SSL</li>
+							<li>NO SSL (only recently)</li>
 							<li>NO AJP</li>
 							<li>few security problems</li>
 							<li>web/REST interface</li>
@@ -554,25 +554,35 @@ listen app :801
 					</ul>
 				</section>
 				<section>
-					<h2>HAPROXY: Future</h2>
-					<ul>
-						<li>lobby haproxy devs to support includes</li>
-					</ul>
-				</section>
-				<section>
 					<h2>HAPROXY: Web Interface</h2>
 					<img src="haproxy.png"/>
 				</section>
 
-				<section>
-					<h1>TODOS</h1>
-					<ul>
-						<li>better presentation (work "another" hour on it)</li>
-					</ul>
-				</section>
+                <section>
+                    Overview
+                    <img src="overview_single.png" />
+                </section>
+                <section>
+                    Overview Current
+                    <img src="overview_multi_current.png" />
+                </section>
+                <section>
+                    Overview Future
+                    <img src="overview_multi.png" />
+                </section>
+                <section>
+                    <h1>Consistent Hashing</h1>
+                    <img src="consistent_hashing_resources.png" />
+                    <img src="consistent_hashing_full.png" />
+                    <a href="http://wiki.nginx.org/HttpUpstreamConsistentHash">http://wiki.nginx.org/HttpUpstreamConsistentHash</a>
+                </section>
 				<section>
 					<h1>THE END</h1>
 					<h3>BY Robert Bartl</h3>
+                    <h1>References</h1>
+                    <ul>
+                        <li>Hashing Picture stolen from http://www.tomkleinpeter.com/2008/03/17/programmers-toolbox-part-3-consistent-hashing/</li>
+                    </ul>
 				</section>
 
 			</div>
